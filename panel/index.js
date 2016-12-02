@@ -159,6 +159,8 @@ Editor.Panel.extend({
             pattern.push( Path.join(componentPath, `R.${c}.js.meta`) );
           }
 
+          Editor.assetdb.remote.watchOFF();
+
           Globby(pattern, (err, paths) => {
             if (err) return Editor.error(err);
 
@@ -176,7 +178,8 @@ Editor.Panel.extend({
             this._replaceContent(Path.join(dest, 'R.group.js'));
             this._replaceContent(Path.join(dest, 'R.path.js'));
 
-            Editor.assetdb.refresh('db://assets/raphael', () => {});
+            // Editor.assetdb.refresh('db://assets/raphael', () => {});
+            Editor.assetdb.remote.watchON();
           });
         },
 
