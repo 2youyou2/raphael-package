@@ -2,7 +2,11 @@
 
 module.exports = {
   load () {
-    // execute when package loaded
+    Editor.Metrics.trackEvent({
+        category: 'Packages',
+        label: 'raphael-package',
+        action: 'Load package'
+    }, null);
   },
 
   unload () {
@@ -14,9 +18,12 @@ module.exports = {
     'open' () {
       // open entry panel registered in package.json
       Editor.Panel.open('raphael-package');
-    },
-    'clicked' () {
-      Editor.log('Button clicked!');
+
+      Editor.Metrics.trackEvent({
+        category: 'Packages',
+        label: 'raphael-package',
+        action: 'Panel Open'
+      }, null);
     }
   },
 };
