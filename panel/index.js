@@ -150,7 +150,11 @@ Editor.Panel.extend({
           }
 
           let componentPath = Path.join(src, 'component/optional');
-          let pattern = [Path.join(src, '**/*'), '!'+Path.join(componentPath, '**/*')];
+          let pattern = [
+            Path.join(src, '**/*.js'),
+            Path.join(src, '**/*.js.meta'),
+            '!'+Path.join(componentPath, '**/*')
+          ];
 
           let components = profile.group.concat( profile.path );
           for (let i = 0; i < components.length; i++) {
@@ -159,12 +163,10 @@ Editor.Panel.extend({
             pattern.push( Path.join(componentPath, `R.${c}.js.meta`) );
           }
 
-          Editor.assetdb.remote.watchOFF();
-
           Globby(pattern, (err, paths) => {
             if (err) return Editor.error(err);
 
-            paths.forEach(path => {
+            paths = paths.map(path => {
               path = Path.normalize(path);
               if (Fs.isDirSync(path)) {
                 return;
@@ -174,22 +176,32 @@ Editor.Panel.extend({
               Fs.ensureDirSync(Path.dirname(destPath));
               Fs.copySync(path, destPath);
             });
-
+            
             this._replaceContent(Path.join(dest, 'R.group.js'));
             this._replaceContent(Path.join(dest, 'R.path.js'));
 
-            // Editor.assetdb.refresh('db://assets/raphael', () => {});
-            Editor.assetdb.remote.watchON();
+            Editor.assetdb.refresh('db://assets/raphael', (err) => {
+              if (err) return Editor.error(err);
+              Editor.log('Update raphael successfully');
+            });
           });
         },
 
         _replaceContent (path) {
           let content = Fs.readFileSync(path, 'utf8');
 
-          let components = profile.group.concat( profile.path );
-          for (let i = 0; i < components.length; i++) {
-            let c = components[i];
-            content = content.replace(`var ${c} = {};`, `var ${c} = require('./component/optional/R.${c}');`);
+          for (let i = 0; i < data.group.length; i++) {
+            let name = data.group[i].name;
+            if (profile.group.indexOf(name) === -1) {
+              content = content.replace(`var ${name} = require('./component/optional/R.${name}');`, `var ${name} = {};`);
+            }
+          }
+
+          for (let i = 0; i < data.path.length; i++) {
+            let name = data.path[i].name;
+            if (profile.path.indexOf(name) === -1) {
+              content = content.replace(`var ${name} = require('./component/optional/R.${name}');`, `var ${name} = {};`);
+            }
           }
 
           Fs.writeFileSync(path, content);
